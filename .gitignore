@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+secrets.*
+*.pem
+*.key
+
+# Local data and generated artifacts
+data/raw/
+datasets/private/
+*.parquet
+*.sqlite
+*.db
+
+# Model artifacts (commit intentionally only when needed)
+# *.pkl
+# *.joblib
+# *.h5
+# *.pt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
