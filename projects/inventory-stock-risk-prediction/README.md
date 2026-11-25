@@ -28,9 +28,10 @@ A binary-classification project that estimates whether an inventory item may fac
 - app.py — Streamlit prediction interface
 - requirements.txt — Python dependencies
 - data/README.md — dataset placement and provenance note
-- models/README.md — model generation instructions
+- stock_risk_model.pkl — trained Random Forest model
+- stock_risk_prediction_dataset (1).xlsx — Excel dataset
 
-The original dataset and trained model binary are not included in this first publication. The dataset's source and redistribution license were not present in the supplied archive, so verify permission before publishing it. Run the notebook to generate the model file locally.
+The dataset and trained model are included in this repository. Before redistributing the dataset further, confirm that its original source permits public sharing.
 
 ## Dataset fields
 
@@ -72,9 +73,13 @@ The notebook creates days_of_inventory, demand_during_lead_time, stock_vs_reorde
 
 The supplied model was serialized with scikit-learn 1.7.2; the requirements file pins that version for compatibility.
 
+## Live application
+
+Try the deployed Streamlit application: [Inventory Stock Risk Prediction](https://data-science-machine-learning-fznu5w5wlnbwajtyz6tvn4.streamlit.app/).
+
 ## Deployment
 
-Deploy this project folder as a Streamlit app only after the trained stock_risk_model.pkl file is present beside app.py. Confirm the dataset's redistribution rights before committing it.
+The application is hosted on Streamlit Community Cloud and is connected to this GitHub repository. The trained `stock_risk_model.pkl` file is stored beside `app.py`, as required by the app's model-loading code.
 
 ## Limitations
 
