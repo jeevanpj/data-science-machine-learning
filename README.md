@@ -25,9 +25,9 @@ data-science-machine-learning/
 └── README.md
 ```
 
-## Projects
+## Featured Project
 
-Project links will be added here as each notebook or project is reviewed, documented, and published. Larger portfolio projects may live in their own dedicated repositories with their own setup instructions and demonstrations.
+- [Inventory Stock Risk Prediction](projects/Inventory-Stock-Risk-Prediction/) — classification workflow, model evaluation, feature engineering, and a Streamlit demo.
 
 ## Tools & Technologies
 
