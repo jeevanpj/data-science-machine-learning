@@ -27,7 +27,7 @@ data-science-machine-learning/
 
 ## Featured Project
 
-- [Inventory Stock Risk Prediction](projects/inventory-stock-risk-prediction/) — classification workflow, model evaluation, feature engineering, and a Streamlit demo.
+- [Inventory Stock Risk Prediction](projects/inventory-stock-risk-prediction/) — classification workflow, model evaluation, feature engineering, and a Streamlit demo. [**Open the live app**](https://data-science-machine-learning-fznu5w5wlnbwajtyz6tvn4.streamlit.app/).
 
 ## Tools & Technologies
 
