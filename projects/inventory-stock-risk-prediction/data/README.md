@@ -1,0 +1,1 @@
+The original Excel dataset was supplied in the project archive, but its source and redistribution license were not included. Before publishing the workbook, verify that you have permission to share it. Place the workbook in this folder or the project root; the notebook searches for an Excel filename containing stock_risk.
