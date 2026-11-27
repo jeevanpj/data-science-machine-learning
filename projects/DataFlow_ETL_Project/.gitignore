@@ -1,0 +1,1 @@
+.venv/\n__pycache__/\n.pytest_cache/\n.env\n*.pyc\ndata/raw/*\ndata/processed/*\ndata/*.db\n!data/raw/.gitkeep\n!data/processed/.gitkeep\n.DS_Store\n
