@@ -1,16 +1,15 @@
-
 import sys
 import sqlite3
 from pathlib import Path
+from datetime import datetime
 
 import pandas as pd
 import streamlit as st
 import plotly.express as px
 
 # --------------------------------------------------
-# 1. PROJECT PATH CONFIGURATION
+# Project imports
 # --------------------------------------------------
-
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_DIR))
 
@@ -18,218 +17,218 @@ from src.config import DB_PATH, LOCATION_NAME
 
 
 # --------------------------------------------------
-# 2. PAGE CONFIGURATION
+# Page configuration and styling
 # --------------------------------------------------
-
 st.set_page_config(
     page_title="DataFlow | ETL Analytics",
     page_icon="🔄",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded",
 )
 
-st.title("🔄 DataFlow — ETL Analytics Dashboard")
-
-st.caption(
-    "Automated Data Engineering Pipeline | "
-    "Open-Meteo API + World Bank API | SQLite Warehouse"
+st.markdown(
+    """
+    <style>
+      .block-container {padding-top: 2rem; padding-bottom: 2rem;}
+      [data-testid="stMetric"] {
+        background: linear-gradient(135deg, rgba(45, 55, 72, .55), rgba(30, 41, 59, .35));
+        border: 1px solid rgba(148, 163, 184, .22);
+        padding: 18px 20px;
+        border-radius: 14px;
+      }
+      div[data-testid="stButton"] > button {
+        border-radius: 10px;
+        min-height: 2.8rem;
+        font-weight: 600;
+      }
+      .section-note {color: #94a3b8; font-size: .92rem;}
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
+
+st.title("🔄 DataFlow")
+st.caption("API-powered ETL pipeline · Weather + World Bank economic indicators")
 
 
 # --------------------------------------------------
-# 3. DATABASE INITIALIZATION
+# Pipeline controls
 # --------------------------------------------------
+with st.sidebar:
+    st.header("Pipeline controls")
+    st.markdown(
+        '<p class="section-note">Extract fresh API data, transform it, and load it into the SQLite warehouse.</p>',
+        unsafe_allow_html=True,
+    )
+    run_pipeline = st.button("▶ Run ETL Pipeline", type="primary", use_container_width=True)
+    st.divider()
+    st.caption(f"Configured location: **{LOCATION_NAME}**")
+    st.caption("Sources: Open-Meteo API · World Bank API")
+    st.caption("Storage: SQLite")
 
-if not DB_PATH.exists():
-
-    st.info("Data warehouse not found. Initializing DataFlow...")
-
+if run_pipeline:
     try:
-        with st.spinner("Extracting, transforming and loading data..."):
-
+        with st.spinner("Running extraction, transformation and loading..."):
             from src.pipeline import main
-
             main()
-
-        st.success("Data warehouse created successfully!")
-
+        st.success("ETL pipeline completed successfully. Dashboard data refreshed.")
         st.rerun()
+    except Exception as exc:
+        st.error(f"ETL pipeline failed: {exc}")
+        st.exception(exc)
 
-    except Exception as e:
-        st.error(f"Pipeline initialization failed: {e}")
+
+# --------------------------------------------------
+# Ensure warehouse exists on first cloud startup
+# --------------------------------------------------
+if not DB_PATH.exists():
+    st.info("The warehouse has not been created in this app session. Running the initial ETL pipeline...")
+    try:
+        with st.spinner("Initializing the data warehouse from the public APIs..."):
+            from src.pipeline import main
+            main()
+        st.success("Initial data load completed.")
+        st.rerun()
+    except Exception as exc:
+        st.error(f"Could not initialize the data warehouse: {exc}")
+        st.exception(exc)
         st.stop()
 
 
 # --------------------------------------------------
-# 4. LOAD DATABASE TABLES
+# Load warehouse tables
 # --------------------------------------------------
-
 try:
-
     with sqlite3.connect(DB_PATH) as conn:
-
         weather = pd.read_sql_query(
-            "SELECT * FROM weather_daily ORDER BY date",
-            conn
+            "SELECT * FROM weather_daily ORDER BY date", conn
         )
-
-        wb = pd.read_sql_query(
-            "SELECT * FROM world_bank_indicator ORDER BY year",
-            conn
+        world_bank = pd.read_sql_query(
+            "SELECT * FROM world_bank_indicator ORDER BY year", conn
         )
-
         logs = pd.read_sql_query(
-            "SELECT * FROM etl_run_log ORDER BY run_id DESC",
-            conn
+            "SELECT * FROM etl_run_log ORDER BY run_id DESC", conn
         )
-
-except Exception as e:
-
-    st.error(f"Unable to read warehouse data: {e}")
+except Exception as exc:
+    st.error(f"Unable to read the SQLite warehouse: {exc}")
+    st.exception(exc)
     st.stop()
 
 
 # --------------------------------------------------
-# 5. DASHBOARD METRICS
+# Overview metrics
 # --------------------------------------------------
-
-st.subheader("Pipeline Overview")
-
-col1, col2, col3 = st.columns(3)
-
-col1.metric(
-    "Weather Records",
-    len(weather)
-)
-
-col2.metric(
-    "Economic Records",
-    len(wb)
-)
-
-col3.metric(
-    "Location",
-    LOCATION_NAME
-)
+st.subheader("Pipeline overview")
+metric1, metric2, metric3, metric4 = st.columns(4)
+metric1.metric("Weather records", f"{len(weather):,}")
+metric2.metric("Economic records", f"{len(world_bank):,}")
+metric3.metric("ETL runs", f"{len(logs):,}")
+last_run = logs.iloc[0]["completed_at"] if not logs.empty else "Not available"
+metric4.metric("Last successful run", str(last_run))
 
 st.divider()
 
 
 # --------------------------------------------------
-# 6. WEATHER ANALYTICS
+# Weather analytics
 # --------------------------------------------------
-
-st.subheader("🌤️ Weather Analytics")
+st.subheader("🌤️ Weather analytics")
+st.caption("Daily forecast and recent observations retrieved from Open-Meteo.")
 
 if not weather.empty:
+    weather["date"] = pd.to_datetime(weather["date"], errors="coerce")
+    weather = weather.dropna(subset=["date"]).sort_values("date")
 
-    weather["date"] = pd.to_datetime(weather["date"])
-
-    st.plotly_chart(
-        px.line(
+    if {"temperature_max_c", "temperature_min_c"}.issubset(weather.columns):
+        weather_chart = px.line(
             weather,
             x="date",
-            y=[
-                "temperature_max_c",
-                "temperature_min_c"
-            ],
+            y=["temperature_max_c", "temperature_min_c"],
             markers=True,
-            title="Daily Maximum and Minimum Temperature",
+            title="Daily maximum and minimum temperature",
             labels={
                 "date": "Date",
                 "value": "Temperature (°C)",
-                "variable": "Temperature Type"
-            }
-        ),
-        use_container_width=True
-    )
+                "variable": "Measure",
+            },
+            template="plotly_dark",
+        )
+        weather_chart.update_layout(legend_title_text="Temperature")
+        st.plotly_chart(weather_chart, use_container_width=True)
 
-    st.markdown("**Weather Dataset**")
+    if "precipitation_mm" in weather.columns:
+        rain_chart = px.bar(
+            weather,
+            x="date",
+            y="precipitation_mm",
+            title="Daily precipitation",
+            labels={"date": "Date", "precipitation_mm": "Precipitation (mm)"},
+            template="plotly_dark",
+        )
+        st.plotly_chart(rain_chart, use_container_width=True)
 
-    st.dataframe(
-        weather,
-        use_container_width=True
-    )
-
+    with st.expander("View weather source data"):
+        st.dataframe(weather, use_container_width=True, hide_index=True)
 else:
-
-    st.info("No weather records available.")
+    st.info("No weather records are currently available.")
 
 
 st.divider()
 
 
 # --------------------------------------------------
-# 7. WORLD BANK ECONOMIC ANALYTICS
+# World Bank analytics
 # --------------------------------------------------
+st.subheader("🌍 World Bank economic indicator")
+st.caption("Historical economic indicator data retrieved from the World Bank API.")
 
-st.subheader("🌍 World Bank Economic Analytics")
-
-if not wb.empty:
-
-    valid = wb.dropna(subset=["value"]).sort_values("year")
+if not world_bank.empty:
+    valid = world_bank.dropna(subset=["value", "year"]).sort_values("year")
 
     if not valid.empty:
-
-        indicator_title = (
-            valid["indicator_name"].iloc[0]
-            or "World Bank Indicator Trend"
+        indicator_name = valid["indicator_name"].iloc[0] or "Economic indicator"
+        economic_chart = px.line(
+            valid,
+            x="year",
+            y="value",
+            markers=True,
+            title=indicator_name,
+            labels={"year": "Year", "value": "Indicator value"},
+            template="plotly_dark",
         )
+        st.plotly_chart(economic_chart, use_container_width=True)
 
-        st.plotly_chart(
-            px.line(
-                valid,
-                x="year",
-                y="value",
-                markers=True,
-                title=indicator_title,
-                labels={
-                    "year": "Year",
-                    "value": "Indicator Value"
-                }
-            ),
-            use_container_width=True
+        latest = valid.iloc[-1]
+        st.metric(
+            f"Latest available value · {int(latest['year'])}",
+            f"{latest['value']:,.2f}",
         )
+    else:
+        st.info("The World Bank API returned records, but no numeric indicator values are available.")
 
-    st.markdown("**Economic Dataset**")
-
-    st.dataframe(
-        wb,
-        use_container_width=True
-    )
-
+    with st.expander("View World Bank source data"):
+        st.dataframe(world_bank, use_container_width=True, hide_index=True)
 else:
-
-    st.info("No economic records available.")
+    st.info("No economic indicator records are currently available.")
 
 
 st.divider()
 
 
 # --------------------------------------------------
-# 8. ETL EXECUTION HISTORY
+# ETL execution history
 # --------------------------------------------------
-
-st.subheader("⚙️ ETL Pipeline Execution History")
-
+st.subheader("🧾 ETL execution history")
 if not logs.empty:
-
-    st.dataframe(
-        logs,
-        use_container_width=True
-    )
-
+    st.dataframe(logs, use_container_width=True, hide_index=True)
 else:
-
-    st.info("No pipeline execution history available.")
+    st.info("No ETL execution history is available yet.")
 
 
 # --------------------------------------------------
-# 9. FOOTER
+# Footer
 # --------------------------------------------------
-
 st.divider()
-
 st.caption(
-    "DataFlow | API-Based ETL Pipeline | "
-    "Python • Pandas • SQLite • Streamlit • Plotly"
+    "DataFlow · Python · Requests · Pandas · SQLite · Streamlit · Plotly"
 )
