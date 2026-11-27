@@ -29,6 +29,9 @@ data-science-machine-learning/
 
 - [Inventory Stock Risk Prediction](projects/inventory-stock-risk-prediction/) — classification workflow, model evaluation, feature engineering, and a Streamlit demo. [**Open the live app**](https://data-science-machine-learning-fznu5w5wlnbwajtyz6tvn4.streamlit.app/).
 
+
+- [DataFlow — API-Based ETL Pipeline](projects/DataFlow_ETL_Project/) — extracts weather and economic data from public APIs, transforms it with Pandas, loads it into SQLite, and presents analytics in a Streamlit dashboard. [**Open the live app**](https://data-science-machine-learning-o9aglogqxhhnsmn3braox4.streamlit.app).
+
 ## Tools & Technologies
 
 `Python` · `Jupyter Notebook` · `Pandas` · `NumPy` · `Matplotlib` · `Seaborn` · `Scikit-learn` · `Streamlit` · `Git` · `GitHub`
